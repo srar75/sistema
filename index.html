@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Gestione Dipendenti</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --background: #f5f6fa;
+            --text: #2c3e50;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        nav {
+            background: white;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        nav a {
+            color: var(--primary);
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        nav a:hover {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .logout-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .section {
+            display: none;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-section {
+            border-bottom: 1px solid #eee;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-section h3 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #eee;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+
+        button {
+            background: var(--secondary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: var(--primary);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .search-bar {
+            margin-bottom: 1rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #eee;
+            border-radius: 5px;
+        }
+
+        .file-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-item i {
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            cursor: pointer;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--secondary);
+            background: #f8f9fa;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+
+        .loading::after {
+            content: '';
+            width: 32px;
+            height: 32px;
+            border: 4px solid #eee;
+            border-top-color: var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #mainContent {
+            display: none;
+        }
+
+        .auth-section {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 0.5rem;
+            margin: 0 0.25rem;
+            border-radius: 4px;
+        }
+
+        .btn-edit {
+            background: var(--secondary);
+        }
+
+        .btn-delete {
+            background: var(--accent);
+        }
+
+        .error-message {
+            color: var(--accent);
+            padding: 1rem;
+            background: #fceaea;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        canvas#firma {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            margin: 1rem 0;
+            width: 100%;
+            max-width: 500px;
+            height: 200px;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .section {
+                padding: 1rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Section -->
+    <div id="loginSection" class="section active auth-section">
+        <div class="card">
+            <h3><i class="fas fa-sign-in-alt"></i> Accesso</h3>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit">Accedi</button>
+                    <button type="button" onclick="showRegistration()">Registrati</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Registration Section -->
+    <div id="registrationSection" class="section auth-section">
+        <div class="card">
+            <h3><i class="fas fa-user-plus"></i> Registrazione</h3>
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="regPassword" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit">Registrati</button>
+                    <button type="button" onclick="showLogin()">Torna al Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <header>
+            <div class="logo">
+                <i class="fas fa-users"></i>
+                <h1>Sistema Gestione Dipendenti</h1>
+            </div>
+        </header>
+
+        <nav>
+            <div class="nav-links">
+                <a href="#" onclick="showSection('anagrafica')"><i class="fas fa-user"></i> Anagrafica</a>
+                <a href="#" onclick="showSection('preassunzione')"><i class="fas fa-file-signature"></i> Pre-assunzione</a>
+                <a href="#" onclick="showSection('documenti')"><i class="fas fa-folder"></i> Documenti</a>
+                <a href="#" onclick="showSection('panorama')"><i class="fas fa-chart-bar"></i> Panoramica</a>
+                <a href="#" onclick="showSection('cv')"><i class="fas fa-file-alt"></i> CV</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </nav>
+
+        <!-- Anagrafica Section -->
+        <div id="anagrafica" class="section active">
+            <div class="card">
+                <form id="anagraficaForm">
+                    <!-- Dati Personali -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-user"></i> Dati Personali</h3>
+                        <div class="form-group">
+                            <label>Nome:</label>
+                            <input type="text" name="nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cognome:</label>
+                            <input type="text" name="cognome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Data di Nascita:</label>
+                            <input type="date" name="dataNascita" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Codice Fiscale:</label>
+                            <input type="text" name="codiceFiscale" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefono:</label>
+                            <input type="tel" name="telefono" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" name="email" required>
+                        </div>
+                    </div>
+
+                    <!-- Residenza -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-home"></i> Residenza</h3>
+                        <div class="form-group">
+                            <label>Via/Piazza:</label>
+                            <input type="text" name="via" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Numero:</label>
+                            <input type="text" name="numero" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Comune:</label>
+                            <input type="text" name="comune" required>
+                        </div>
+                        <div class="form-group">
+                            <label>CAP:</label>
+                            <input type="text" name="cap" required>
+                        </div>
+                    </div>
+
+                    <!-- Informazioni Lavorative -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-briefcase"></i> Informazioni Lavorative</h3>
+                        <div class="form-group">
+                            <label>Data Inizio Impiego:</label>
+                            <input type="date" name="dataInizio" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo Contratto:</label>
+                            <select name="tipoContratto" required>
+                                <option value="">Seleziona</option>
+                                <option value="determinato">Determinato</option>
+                                <option value="indeterminato">Indeterminato</option>
+                            </select>
+                        </div>
+                        <div id="durataDeterminato" class="form-group" style="display: none;">
+                            <label>Durata (mesi):</label>
+                            <input type="number" name="durataContratto" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Giorni Lavorativi:</label>
+                            <select name="giorniLavorativi" required>
+                                <option value="lunVen">Lunedì-Venerdì (2 giorni riposo)</option>
+                                <option value="lunDom2">Lunedì-Domenica (2 giorni riposo)</option>
+                                <option value="lunDom1">Lunedì-Domenica (1 giorno riposo)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ferie:</label>
+                            <select name="ferie" required>
+                                <option value="contratto">Secondo contratto</option>
+                                <option value="no">Senza ferie</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Permessi:</label>
+                            <select name="permessi" required>
+                                <option value="contratto">Secondo contratto</option>
+                                <option value="no">Senza permessi</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Informazioni Aggiuntive -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-info-circle"></i> Informazioni Aggiuntive</h3>
+                        <div class="form-group">
+                            <label>Luogo di Lavoro:</label>
+                            <input type="text" name="luogoLavoro" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsabile:</label>
+                            <input type="text" name="responsabile" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Salario Netto Orario (€):</label>
+                            <input type="number" step="0.01" name="salarioOrario" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Salario Netto Giornaliero (€):</label>
+                            <input type="number" step="0.01" name="salarioGiornaliero" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Salario Netto Mensile (€):</label>
+                            <input type="number" step="0.01" name="salarioMensile" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Note:</label>
+                            <textarea name="note" rows="4"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" onclick="resetForm()">Reset</button>
+                        <button type="submit">Salva</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pre-assunzione Section -->
+        <div id="preassunzione" class="section">
+            <div class="card">
+                <h3><i class="fas fa-file-signature"></i> Pre-assunzione</h3>
+                <form id="preassunzioneForm">
+                    <div class="form-section">
+                        <h3><i class="fas fa-file-alt"></i> Documenti Richiesti</h3>
+                        <div class="form-group">
+                            <label>Documento d'Identità:</label>
+                            <input type="file" name="documentoIdentita" accept=".pdf,.jpg,.jpeg,.png" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Codice Fiscale:</label>
+                            <input type="file" name="codiceFiscaleDoc" accept=".pdf,.jpg,.jpeg,.png" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Permesso di Soggiorno (se applicabile):</label>
+                            <input type="file" name="permessoSoggiorno" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-signature"></i> Firma</h3>
+                        <canvas id="firma"></canvas>
+                        <div class="button-group">
+                            <button type="button" onclick="clearSignature()">Pulisci Firma</button>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" onclick="generateDocuments()">Genera Documenti</button>
+                        <button type="button" onclick="sendToConsultant()">Invia al Consulente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Documenti Section -->
+        <div id="documenti" class="section">
+            <div class="card">
+                <h3><i class="fas fa-folder"></i> Documenti</h3>
+                <div class="upload-area" onclick="document.getElementById('uploadDocumenti').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Carica documenti</p>
+                    <input type="file" id="uploadDocumenti" multiple accept=".pdf,.doc,.docx" style="display: none;">
+                </div>
+                <div class="file-list" id="documentiList">
+                    <!-- Los documentos se cargarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Panorama Section -->
+        <div id="panorama" class="section">
+            <div class="card">
+                <h3><i class="fas fa-chart-bar"></i> Panoramica Dipendenti</h3>
+                <div class="search-bar">
+                    <input type="text" id="searchEmployee" placeholder="Cerca dipendente...">
+                </div>
+                <table id="employeeTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cognome</th>
+                            <th>Codice Fiscale</th>
+                            <th>Tipo Contratto</th>
+                            <th>Data Inizio</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CV Section -->
+        <div id="cv" class="section">
+            <div class="card">
+                <h3><i class="fas fa-file-alt"></i> Curriculum Vitae</h3>
+                <div class="upload-area" onclick="document.getElementById('uploadCV').click()">
+                    <i class="fas fa-file-upload"></i>
+                    <p>Carica il tuo CV</p>
+                    <input type="file" id="uploadCV" accept=".pdf,.doc,.docx" style="display: none;">
+                </div>
+                <div class="file-list" id="cvList">
+                    <!-- Los CV se cargarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCEHzqYF6F2rTc5kyHAyBeLOijfNzX-P3s",
+            authDomain: "words-af37f.firebaseapp.com",
+            databaseURL: "https://words-af37f-default-rtdb.firebaseio.com",
+            projectId: "words-af37f",
+            storageBucket: "words-af37f.firebasestorage.app",
+            messagingSenderId: "1057306735891",
+            appId: "1:1057306735891:web:3e1df60706fd17906f16e6",
+            measurementId: "G-P22BEPK48K"
+          };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Variables globales
+        let currentUser = null;
+        let currentEmployeeId = null;
+        let isDrawing = false;
+        let ctx;
+
+        // Funciones de autenticación
+        function showRegistration() {
+            document.getElementById('loginSection').classList.remove('active');
+            document.getElementById('registrationSection').classList.add('active');
+        }
+
+        function showLogin() {
+            document.getElementById('registrationSection').classList.remove('active');
+            document.getElementById('loginSection').classList.add('active');
+        }
+
+        async function logout() {
+            try {
+                await auth.signOut();
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                showLogin();
+            } catch (error) {
+                console.error('Error durante il logout:', error);
+                alert('Errore durante il logout: ' + error.message);
+            }
+        }
+
+        // Manejo de formularios de autenticación
+        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+                showLogin();
+                alert('Registrazione completata con successo!');
+            } catch (error) {
+                console.error('Error durante la registrazione:', error);
+                alert('Errore durante la registrazione: ' + error.message);
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                console.error('Error durante il login:', error);
+                alert('Errore di accesso: ' + error.message);
+            }
+        });
+
+        // Observer de estado de autenticación
+        auth.onAuthStateChanged((user) => {
+            currentUser = user;
+            if (user) {
+                console.log('Usuario autenticado:', user.uid);
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('registrationSection').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                loadEmployeeData();
+                initializeSignature();
+                loadDocuments();
+                loadCV();
+            } else {
+                console.log('Usuario no autenticado');
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+            }
+        });
+
+        // Funciones de gestión de empleados
+        async function saveEmployee(formData) {
+            if (!currentUser) {
+                alert('Devi effettuare l\'accesso per salvare i dati');
+                return;
+            }
+
+            try {
+                console.log('Iniciando guardado de empleado');
+                
+                // Convertir FormData a objeto
+                const employeeData = {
+                    userId: currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Agregar todos los campos del formulario
+                for (let [key, value] of formData.entries()) {
+                    employeeData[key] = value;
+                }
+
+                console.log('Datos a guardar:', employeeData);
+
+                if (currentEmployeeId) {
+                    // Actualizar empleado existente
+                    await db.collection('employees').doc(currentEmployeeId).update({
+                        ...employeeData,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('Empleado actualizado:', currentEmployeeId);
+                    alert('Dipendente aggiornato con successo');
+                } else {
+                    // Crear nuevo empleado
+                    const docRef = await db.collection('employees').add(employeeData);
+                    console.log('Nuevo empleado creado:', docRef.id);
+                    alert('Dipendente salvato con successo');
+                }
+
+                resetForm();
+                loadEmployeeData();
+                showSection('panorama');
+            } catch (error) {
+                console.error('Error al guardar:', error);
+                alert('Errore durante il salvataggio: ' + error.message);
+            }
+        }
+
+        async function loadEmployeeData() {
+            if (!currentUser) {
+                console.log('No hay usuario autenticado');
+                return;
+            }
+
+            try {
+                console.log('Iniciando carga de datos para usuario:', currentUser.uid);
+                
+                const snapshot = await db.collection('employees')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+
+                console.log('Datos obtenidos:', snapshot.size, 'documentos');
+
+                const tbody = document.querySelector('#employeeTable tbody');
+                tbody.innerHTML = '';
+
+                if (snapshot.empty) {
+                    console.log('No se encontraron empleados');
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 20px;">
+                                Nessun dipendente trovato. Aggiungi il tuo primo dipendente.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    console.log('Procesando documento:', doc.id);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.nome || ''}</td>
+                        <td>${data.cognome || ''}</td>
+                        <td>${data.codiceFiscale || ''}</td>
+                        <td>${data.tipoContratto || ''}</td>
+                        <td>${data.dataInizio || ''}</td>
+                        <td>
+                            <button onclick="editEmployee('${doc.id}')" class="btn-edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteEmployee('${doc.id}')" class="btn-delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error detallado:', error);
+                alert('Errore durante il caricamento dei dati: ' + error.message);
+            }
+        }
+
+        async function editEmployee(employeeId) {
+            try {
+                const doc = await db.collection('employees').doc(employeeId).get();
+                if (!doc.exists) {
+                    alert('Dipendente non trovato');
+                    return;
+                }
+
+                const data = doc.data();
+                const form = document.getElementById('anagraficaForm');
+                
+                // Rellenar el formulario con los datos del empleado
+                Object.entries(data).forEach(([key, value]) => {
+                    const input = form.elements[key];
+                    if (input && key !== 'userId' && key !== 'createdAt' && key !== 'updatedAt') {
+                        input.value = value;
+                    }
+                });
+
+                currentEmployeeId = employeeId;
+                showSection('anagrafica');
+
+                // Mostrar/ocultar durata contratto si es necesario
+                const tipoContrattoSelect = form.elements['tipoContratto'];
+                const durataDeterminato = document.getElementById('durataDeterminato');
+                durataDeterminato.style.display = 
+                    tipoContrattoSelect.value === 'determinato' ? 'block' : 'none';
+
+            } catch (error) {
+                console.error('Error editing employee:', error);
+                alert('Errore durante la modifica');
+            }
+        }
+
+        async function deleteEmployee(employeeId) {
+            if (!confirm('Sei sicuro di voler eliminare questo dipendente?')) return;
+
+            try {
+                await db.collection('employees').doc(employeeId).delete();
+                await deleteEmployeeDocuments(employeeId);
+                alert('Dipendente eliminato con successo');
+                loadEmployeeData();
+            } catch (error) {
+                console.error('Error deleting employee:', error);
+                alert('Errore durante l\'eliminazione');
+            }
+        }
+
+        // Funciones para la firma digital
+        function initializeSignature() {
+            const canvas = document.getElementById('firma');
+            if (!canvas) return;
+            
+            ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            
+            // Eventos para la firma
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Eventos táctiles
+            canvas.addEventListener('touchstart', startDrawingTouch);
+            canvas.addEventListener('touchmove', drawTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            const rect = e.target.getBoundingClientRect();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function startDrawingTouch(e) {
+            e.preventDefault();
+            isDrawing = true;
+            ctx.beginPath();
+            const rect = e.target.getBoundingClientRect();
+            const touch = e.touches[0];
+            ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = e.target.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function drawTouch(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const rect = e.target.getBoundingClientRect();
+            const touch = e.touches[0];
+            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        function clearSignature() {
+            const canvas = document.getElementById('firma');
+            if (!canvas) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Funciones para documentos y CV
+        async function saveDocumentToFirestore(file, type, employeeId = null) {
+            if (!currentUser) return;
+
+            const docData = {
+                userId: currentUser.uid,
+                employeeId: employeeId,
+                fileName: file.name,
+                fileType: file.type,
+                size: file.size,
+                uploadDate: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await db.collection(type).add(docData);
+        }
+
+        async function loadDocuments() {
+            if (!currentUser) return;
+
+            try {
+                const snapshot = await db.collection('documenti')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('uploadDate', 'desc')
+                    .get();
+
+                const documentList = document.getElementById('documentiList');
+                if (!documentList) return;
+                
+                documentList.innerHTML = '';
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <i class="fas fa-file-alt"></i>
+                        <span>${data.fileName}</span>
+                        <button onclick="deleteDocument('${doc.id}', 'documenti')" class="btn-delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    documentList.appendChild(fileItem);
+                });
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+
+        async function loadCV() {
+            if (!currentUser) return;
+
+            try {
+                const snapshot = await db.collection('cv')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('uploadDate', 'desc')
+                    .get();
+
+                const cvList = document.getElementById('cvList');
+                if (!cvList) return;
+                
+                cvList.innerHTML = '';
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <i class="fas fa-file-pdf"></i>
+                        <span>${data.fileName}</span>
+                        <button onclick="deleteDocument('${doc.id}', 'cv')" class="btn-delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    cvList.appendChild(fileItem);
+                });
+            } catch (error) {
+                console.error('Error loading CV:', error);
+            }
+        }
+
+        async function deleteDocument(docId, collection) {
+            if (!confirm('Sei sicuro di voler eliminare questo documento?')) return;
+
+            try {
+                await db.collection(collection).doc(docId).delete();
+                alert('Documento eliminato con successo!');
+                if (collection === 'cv') {
+                    loadCV();
+                } else {
+                    loadDocuments();
+                }
+            } catch (error) {
+                console.error('Error deleting document:', error);
+                alert('Errore durante l\'eliminazione del documento: ' + error.message);
+            }
+        }
+
+        async function deleteEmployeeDocuments(employeeId) {
+            try {
+                // Eliminar documentos asociados
+                const documentsQuery = await db.collection('documenti')
+                    .where('employeeId', '==', employeeId)
+                    .get();
+                
+                const batch = db.batch();
+                documentsQuery.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+            } catch (error) {
+                console.error('Error deleting employee documents:', error);
+            }
+        }
+
+        // Funciones para la generación y envío de documentos
+        function generateDocuments() {
+            const canvas = document.getElementById('firma');
+            if (!canvas) return;
+            
+            if (canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
+                alert('Per favore, aggiungi la tua firma prima di generare i documenti.');
+                return;
+            }
+            
+            // Aquí se implementaría la lógica de generación de documentos
+            alert('Documenti generati con successo!');
+        }
+
+        function sendToConsultant() {
+            // Aquí se implementaría la lógica de envío al consultor
+            alert('Documenti inviati al consulente con successo!');
+        }
+
+        // Event Listeners para archivos
+        document.getElementById('uploadDocumenti')?.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                try {
+                    await saveDocumentToFirestore(file, 'documenti');
+                    alert('Documento caricato con successo!');
+                } catch (error) {
+                    console.error('Error uploading document:', error);
+                    alert('Errore durante il caricamento del documento: ' + error.message);
+                }
+            }
+            loadDocuments();
+        });
+
+        document.getElementById('uploadCV')?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                try {
+                    await saveDocumentToFirestore(file, 'cv');
+                    alert('CV caricato con successo!');
+                    loadCV();
+                } catch (error) {
+                    console.error('Error uploading CV:', error);
+                    alert('Errore durante il caricamento del CV: ' + error.message);
+                }
+            }
+        });
+
+        // Event Listener para el tipo de contrato
+        document.querySelector('[name="tipoContratto"]')?.addEventListener('change', function(e) {
+            const durataDeterminato = document.getElementById('durataDeterminato');
+            if (durataDeterminato) {
+                durataDeterminato.style.display = 
+                    e.target.value === 'determinato' ? 'block' : 'none';
+            }
+        });
+
+        // Event Listener para el formulario de empleado
+        document.getElementById('anagraficaForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            await saveEmployee(formData);
+        });
+
+        // Event Listener para búsqueda de empleados
+        document.getElementById('searchEmployee')?.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#employeeTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Función para mostrar secciones
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            // Cargar datos específicos según la sección
+            if (sectionId === 'documenti') {
+                loadDocuments();
+            } else if (sectionId === 'cv') {
+                loadCV();
+            } else if (sectionId === 'panorama') {
+                loadEmployeeData();
+            }
+        }
+
+        // Función para resetear formulario
+        function resetForm() {
+            const form = document.getElementById('anagraficaForm');
+            if (form) {
+                form.reset();
+                currentEmployeeId = null;
+                const durataDeterminato = document.getElementById('durataDeterminato');
+                if (durataDeterminato) {
+                    durataDeterminato.style.display = 'none';
+                }
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            showLogin();
+            console.log('Aplicación inicializada');
+        });
+    </script>
+</body>
+</html>
